@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Basic Meta Tags -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FTTH Map</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <!-- Leaflet Measure CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-measure/3.3.1/leaflet-measure.css" />
+    <!-- Custom Styles -->
+    <link rel="stylesheet" type="text/css" href="css/style.css">
+    <!-- Responsive CSS -->
+    <link rel="stylesheet" href="css/responsive.css">
+    <!-- Font Awesome CSS -->
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <!-- Map Style -->
+    <style>
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <!-- Map Container -->
+    <div id="map"></div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <!-- Axios JS -->
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <!-- Leaflet Measure JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-measure/3.3.1/leaflet-measure.js"></script>
+    <!-- jQuery and Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- Google Maps API -->
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY"></script>
+    <script>
+        // Check authentication status on page load
+        if (localStorage.getItem('authenticated') !== 'true') {
+            window.location.href = 'index.html';
+        }
+
+        // Initialize the map
+        var map = L.map('map').setView([51.505, -0.09], 13);
+
+        // Base layers
+        var osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        });
+
+        var satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+        });
+
+        // Add default layer to the map
+        osmLayer.addTo(map);
+
+        // Base layers object
+        var baseLayers = {
+            "OpenStreetMap": osmLayer,
+            "Satellite": satelliteLayer
+        };
+
+        // Layer control
+        L.control.layers(baseLayers).addTo(map);
+
+        // Fetch data from GeoServer
+        function fetchGeoServerData() {
+            const wfsUrl = 'http://localhost:8080/geoserver/FTTH_NETWORKS/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=FTTH_NETWORKS:Dsalaam_central&maxFeatures=50&outputFormat=application/json';
+
+            console.log('Fetching data from GeoServer:', wfsUrl);
+
+            axios.get(wfsUrl)
+                .then(response => {
+                    const geoData = response.data;
+                    console.log('Fetched GeoServer Data:', geoData);
+
+                    if (geoData.features && geoData.features.length > 0) {
+                        L.geoJSON(geoData).addTo(map);
+                    } else {
+                        console.error('No features found in the fetched data.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching data from GeoServer:', error);
+                });
+        }
+
+        fetchGeoServerData();
+
+        // Street View Control
+        var streetViewControl = L.Control.extend({
+            onAdd: function(map) {
+                var div = L.DomUtil.create('div', 'street-view-control');
+                L.DomEvent.on(div, 'click', function() {
+                    var center = map.getCenter();
+                    var streetViewService = new google.maps.StreetViewService();
+                    var streetViewPanorama = new google.maps.StreetViewPanorama(document.createElement('div'));
+                    var radius = 50; // Meters
+
+                    streetViewService.getPanorama({ location: center, radius: radius }, function(data, status) {
+                        if (status === google.maps.StreetViewStatus.OK) {
+                            streetViewPanorama.setPano(data.location.pano);
+                            streetViewPanorama.setPov({
+                                heading: 270,
+                                pitch: 0
+                            });
+                            streetViewPanorama.setVisible(true);
+                            var streetViewWindow = L.popup()
+                                .setLatLng(center)
+                                .setContent(streetViewPanorama.getContainer())
+                                .openOn(map);
+                        } else {
+                            alert('No Street View available at this location.');
+                        }
+                    });
+                });
+                return div;
+            }
+        });
+
+        map.addControl(new streetViewControl({ position: 'topright' }));
+
+        // Add measure control
+        var measureControl = new L.Control.Measure({
+            position: 'topright',
+            primaryLengthUnit: 'meters',
+            secondaryLengthUnit: 'kilometers',
+            primaryAreaUnit: 'sqmeters',
+            secondaryAreaUnit: 'hectares'
+        });
+        map.addControl(measureControl);
+    </script>
+</body>
+</html>

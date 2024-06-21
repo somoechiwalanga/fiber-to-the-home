@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Basic Meta Tags -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up Page</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #e6f2f1;
+            margin: 0;
+        }
+        .container {
+            max-width: 400px;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            background-color: white;
+        }
+        .container h2 {
+            color: #ff7f50;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .btn-custom {
+            background-color: #ff7f50;
+            color: white;
+        }
+        .btn-custom:hover {
+            background-color: #ff6347;
+            color: white;
+        }
+        .login-link {
+            text-align: center;
+            margin-top: 1rem;
+        }
+        .login-link a {
+            color: #ff7f50;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>SIGNUP</h2>
+        <form id="signUpForm">
+            <div class="form-group">
+                <input type="text" class="form-control" id="signUpName" placeholder="Enter your full name" required>
+            </div>
+            <div class="form-group">
+                <input type="email" class="form-control" id="signUpEmail" placeholder="Enter your email address" required>
+            </div>
+            <div class="form-group">
+                <input type="password" class="form-control" id="signUpPassword" placeholder="Input password" required>
+            </div>
+            <div class="form-group">
+                <input type="password" class="form-control" id="signUpRepeatPassword" placeholder="Repeat password" required>
+            </div>
+            <button type="submit" class="btn btn-custom btn-block">Sign Up</button>
+        </form>
+        <div class="login-link">
+            Already have an account? <a href="index.html">Login</a>
+        </div>
+    </div>
+
+    <!-- jQuery and Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        document.getElementById('signUpForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            var name = document.getElementById('signUpName').value;
+            var email = document.getElementById('signUpEmail').value;
+            var password = document.getElementById('signUpPassword').value;
+            var repeatPassword = document.getElementById('signUpRepeatPassword').value;
+
+            if (password !== repeatPassword) {
+                alert('Passwords do not match');
+                return;
+            }
+
+            localStorage.setItem('user', JSON.stringify({ name, email, password }));
+            alert('Sign Up successful! Please sign in.');
+            window.location.href = 'index.html';
+        });
+    </script>
+</body>
+</html>
